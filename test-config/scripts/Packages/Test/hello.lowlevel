@@ -1,0 +1,27 @@
+#!/bin/bash -e
+
+source $cbtFunctionsDir/deployPackage
+source $cbtBaseDir/settings/testsequence
+
+name=hello
+version=2.1.1
+group=Packages/Test
+description="GNU Hello"
+files=("h/hello/$name-$version.tar.gz")
+
+showLongDescription()
+{
+    cat << "EOF"
+The GNU Hello program produces a familiar, friendly greeting. GNU Hello
+processes its arguments list to modify its behavior, supports greetings in many
+languages, and so on.
+
+The primary purpose of GNU Hello is to demonstrate how to write other programs
+to do thse things; it serves as a model for GNU coding standards and GNU
+maintainer practices.
+EOF
+}
+
+buildCommand="gzip -cd $sourcesDir/${files[0]} | tar xfv - && cd $name-$version && ./configure && make"
+installCommand="cd $name-$version && make install"
+executeFunction=deployPackage

@@ -1,0 +1,14 @@
+#!/bin/bash -e
+
+optional="true"
+
+scripts="\
+Scripts/Test/hello-world \
+Scripts/Test/bye-world \
+Scripts/Test/copy-file \
+Tools/Additional/checkinstall \
+Packages/Test/hello.lowlevel \
+Packages/Test/hello.phases \
+Packages/Test/hello \
+Packages/Test/again-script \
+"

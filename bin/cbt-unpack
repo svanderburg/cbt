@@ -1,0 +1,107 @@
+#!/bin/bash -e
+
+# Shows the usage of this command to the user
+
+showUsage()
+{
+    local me="$(basename "$0")"
+
+    cat <<EOF
+Usage: $me ARCHIVE
+
+Automatically unpacks the provided archive file by consulting the unpack plugins
+in the in the \$cbtUnpackPlugins directory.
+
+If a plugin recognizes the provided file it unpacks it and sets the hasUnpacked
+environment variable to 1 causing the process to stop. Otherwise, the remaining
+available pluins are examined. If no plugin has recognized the file, the process
+will fail.
+
+Options:
+  -h, --help             Display help page
+
+Environment:
+  CBT_UNPACK_PLUGINS     Specify the directory in which unpack plugins can be
+                         found (defaults to: /usr/share/cbt/unpack-plugins)
+EOF
+}
+
+# Shows the version of this command to the user
+
+showVersion()
+{
+    local me="$(basename "$0")"
+
+    cat <<EOF
+$me (cbt) 0.1
+EOF
+}
+
+# Parse valid argument options
+
+PARAMS=`getopt -n "$0" -o hv -l help,version -- "$@"`
+
+if [ $? != 0 ]
+then
+     showUsage
+     exit 1
+fi
+
+eval set -- "$PARAMS"
+
+# Evaluate valid options
+
+while [ "$1" != "--" ]
+do
+    case "$1" in
+        -h|--help)
+            showUsage
+            exit 0
+            ;;
+        -v|--version)
+            showVersion
+            exit 0
+            ;;
+        *)
+            showUsage
+            exit 1
+            ;;
+    esac
+
+    shift
+done
+
+shift
+
+# Evaluate non-options
+
+archive="$1"
+
+if [ "$archive" = "" ]
+then
+    echo "ERROR: No archive specified" >&2
+    showUsage
+    exit 1
+fi
+
+# Evaluate environment variables
+
+CBT_UNPACK_PLUGINS="${CBT_UNPACK_PLUGINS:-/usr/local/share/cbt/unpack-plugins}"
+
+# Execute unpack operation
+
+for unpackPlugin in $CBT_UNPACK_PLUGINS/*
+do
+    source $unpackPlugin
+
+    if [ "$hasUnpacked" = "1" ]
+    then
+        break
+    fi
+done
+
+if [ "$hasUnpacked" != "1" ]
+then
+    echo "ERROR: Don't know how to unpack: $archive" >&2
+    exit 1
+fi

@@ -1,0 +1,13 @@
+#!/bin/bash -e
+
+source $cbtFunctionsDir/deployTrivialPackage
+
+name=again-script
+group=Packages/Test
+description="Simple executable that says: again"
+
+installPhase()
+{
+    install -m755 -d /tmp/bin
+    install -m755 $cbtBaseDir/test-script/again /tmp/bin
+}

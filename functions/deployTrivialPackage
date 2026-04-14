@@ -1,0 +1,12 @@
+#!/bin/bash -e
+
+if [ "$arch" = "" ]
+then
+    arch=noarch
+fi
+
+source $cbtFunctionsDir/deployPhases
+source $cbtCommonDir/desktopItemFunctions
+
+buildPhases=""
+installPhases="install"

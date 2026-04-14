@@ -1,0 +1,29 @@
+#!/bin/bash -e
+
+# Checks the TMPDIR value and sets it to the default value if unspecified
+#
+# Environment variables:
+# TMPDIR Path to the temp folder
+
+checkTmpDir()
+{
+    export TMPDIR="${TMPDIR:-/tmp}"
+}
+
+# Checks the CBT_STATE_DIR value and sets it to the default value if unspecified
+#
+# Environment variables:
+# CBT_STATE_DIR Path to the cbt state directory
+
+checkCbtStateDir()
+{
+    if [ "$CBT_STATE_DIR" = "" ]
+    then
+        if [ "$UID" = "0" ]
+        then
+            CBT_STATE_DIR="/var/state/cbt"
+        else
+            CBT_STATE_DIR="$HOME/.cbt"
+        fi
+    fi
+}

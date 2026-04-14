@@ -1,0 +1,7 @@
+#!/bin/bash -e
+
+case "$1" in
+    *.bz2|*.bz)
+        bunzip2 -c "$1"
+        ;;
+esac

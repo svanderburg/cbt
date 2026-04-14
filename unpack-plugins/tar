@@ -1,0 +1,20 @@
+#!/bin/bash -e
+
+case "$1" in
+    *.tar)
+        tar xfv "$1"
+        hasUnpacked=1
+        ;;
+    *.tar.Z)
+        tar xfvZ "$1"
+        hasUnpacked=1
+        ;;
+    *.tar.gz|*.tgz)
+        tar xfvz "$1"
+        hasUnpacked=1
+        ;;
+    *.tar.bz2|*.tar.bz|*.tbz|*.tbz2)
+        bzip2 -cd "$1" | tar xfv -
+        hasUnpacked=1
+        ;;
+esac

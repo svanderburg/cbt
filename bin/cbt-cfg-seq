@@ -1,0 +1,210 @@
+#!/bin/bash -e
+
+# Open functionality modules
+source $CBT_DATADIR/lib/dialog
+source $CBT_DATADIR/lib/checks
+source $CBT_DATADIR/lib/sequence
+source $CBT_DATADIR/lib/script
+source $CBT_DATADIR/lib/groupSelector
+
+# Generates the check list parameters that need to be propagated to the dialog
+# command to show a check list of scripts that can be selected or unselected.
+#
+# Parameters:
+# $1 A white space separated list of scripts in a selected group
+#
+# Environment variables:
+# scriptCheckListItems An array of check list items showing scripts that can be selected
+
+generateScriptCheckListItems()
+{
+    scriptCheckListItems=()
+
+    local sortedSequence="$(echo "$1" | xargs -n1 | sort -n)"
+
+    local script
+    for script in $sortedSequence
+    do
+        local scriptName="$(basename "$script")"
+
+        loadAndCheckScript "scripts/$script"
+
+        local selected
+
+        if $scriptIsSelected "$script"
+        then
+            selected="on"
+        else
+            selected="off"
+        fi
+
+        scriptCheckListItems=("${scriptCheckListItems[@]}" "$scriptName" "$description" "$selected")
+    done
+}
+
+# Selects marked scripts in a group and unselects the remainder.
+#
+# Parameters:
+# $1 A white space separated string of scripts in a selected group
+# $2 A white space separated string containing selected script with double quotes around them
+#
+# Environment variables:
+# selectScript Name of the function that selects a script in a sequence
+# unselectScript Name of the function that unselects a script in a sequence
+
+enableScriptsInGroup()
+{
+    local script
+    for script in $1
+    do
+        local scriptName="$(basename "$script")"
+
+        case "$2" in
+            *\"$scriptName\"*)
+                $selectScript "$script"
+                ;;
+            *)
+                $unselectScript "$script"
+                ;;
+        esac
+    done
+}
+
+# Displays a checklist dialog allowing a user to select the scripts that need
+# to be enabled or disabled in a selected group. 
+#
+# Parameters:
+# $1 A white space separated string of scripts
+# $2 Path to a selected group
+#
+# Environment variables:
+# selectedScripts A white separated string with selected scripts with double quotes around them
+
+displayScriptsInGroupSelector()
+{
+    queryScriptsInGroup "$1" "$2" # scriptsInGroup=
+    generateScriptCheckListItems "$scriptsInGroup" # scriptCheckListItems=
+
+    set +e
+    selectedScripts=$($DIALOG --backtitle "CBT" \
+      --title "Select scripts" \
+      --checklist "Select the scripts that you want to be executed in a sequence" \
+      20 70 12 \
+      "${scriptCheckListItems[@]}" 2>&1 1>&3)
+    exitStatus=$?
+    set -e
+
+    if [ "$exitStatus" -eq 0 ]
+    then
+        enableScriptsInGroup "$scriptsInGroup" "$selectedScripts"
+    fi
+}
+
+# Shows the usage of this command to the user
+
+showUsage()
+{
+    local me="$(basename "$0")"
+
+    cat <<EOF
+Usage: $me [OPTION] SEQUENCE
+
+Configures the scripts that need to be executed while executing a given
+sequence.
+
+Options:
+      --group            Group to select scripts from. If none is specified, a
+                         group selector will be shown
+  -h, --help             Display help page
+  -v, --version          Display version
+EOF
+}
+
+# Shows the version of this command to the user
+
+showVersion()
+{
+    local me="$(basename "$0")"
+
+    cat <<EOF
+$me (cbt) 0.1
+EOF
+}
+
+# Parse valid argument options
+
+PARAMS=`getopt -n "$0" -o hv -l group:,help,version -- "$@"`
+
+if [ $? != 0 ]
+then
+     showUsage
+     exit 1
+fi
+
+eval set -- "$PARAMS"
+
+# Evaluate valid options
+
+while [ "$1" != "--" ]
+do
+    case "$1" in
+        --group)
+            selectedGroup="$2"
+            shift
+            ;;
+        -h|--help)
+            showUsage
+            exit 0
+            ;;
+        -v|--version)
+            showVersion
+            exit 0
+            ;;
+        *)
+            showUsage
+            exit 1
+            ;;
+    esac
+
+    shift
+done
+
+shift
+
+# Evaluate non-options
+
+if [ "$1" = "" ]
+then
+    echo "No sequence file provided!" >&2
+    exit 1
+else
+    sequenceFile="$1"
+fi
+
+# Evaluate environment variables
+
+checkDialog
+checkCbtStateDir
+
+# Open script configurations
+source "$sequenceFile"
+
+# Set configuration variables
+
+sequenceName="$(basename "$sequenceFile")"
+determineSequenceSettings "$optional"
+
+# Display dialogs
+
+exec 3>&1
+
+if [ "$selectedGroup" = "" ]
+then
+    while true
+    do
+        displayGroupSelector "$scripts" # selectedGroup=
+        displayScriptsInGroupSelector "$scripts" "$selectedGroup"
+    done
+else
+    displayScriptsInGroupSelector "$scripts" "$selectedGroup"
+fi

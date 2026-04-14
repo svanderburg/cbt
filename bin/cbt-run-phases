@@ -1,0 +1,147 @@
+#!/bin/bash -e
+
+# Runs a hook (function) with the given name if it exists.
+#
+# Parameters:
+# $1 Name of the hook
+
+runHook()
+{
+    local hookName="$1"
+
+    if [ "$(type -t "$hookName")" = "function" ]
+    then
+        $hookName
+    fi
+}
+
+# Executes a phase. A phase consists of a function that executes something,
+# optionally preceded with a pre and post hook.
+#
+# Parameters:
+# $1 Phase name
+
+executePhase()
+{
+    local phase="$1"
+    local phasePostfix="$(echo "${phase:0:1}" | tr '[:lower:]' '[:upper:]')${phase:1}"
+
+    echo "Executing phase: $phase" >&2
+
+    runHook "pre$phasePostfix"
+    runHook "${phase}Phase"
+    runHook "post$phasePostfix"
+}
+
+# Shows the usage of this command to the user
+
+showUsage()
+{
+    local me="$(basename "$0")"
+
+    cat <<EOF
+Usage: $me --global-config CONFIG --script SCRIPTS [PHASES_VARNAME]
+
+Loads the given global and script configurations and executes the phases defined
+in them.
+
+By default, it executes the phases defined in the \$phases environment variable,
+but it is also possible to specify another environment variable.
+
+Options:
+      --global-config    Bash script containing global configuration settings
+      --script           Bash script containing a script configuration
+  -h, --help             Display help page
+  -v, --version          Display version
+EOF
+}
+
+# Shows the version of this command to the user
+
+showVersion()
+{
+    local me="$(basename "$0")"
+
+    cat <<EOF
+$me (cbt) 0.1
+EOF
+}
+
+# Parse valid argument options
+
+PARAMS=`getopt -n "$0" -o hv -l global-config:,script:,help,version -- "$@"`
+
+if [ $? != 0 ]
+then
+     showUsage
+     exit 1
+fi
+
+eval set -- "$PARAMS"
+
+# Evaluate valid options
+
+while [ "$1" != "--" ]
+do
+    case "$1" in
+        --global-config)
+            globalConfig="$2"
+            shift
+            ;;
+        --script)
+            scriptConfig="$2"
+            shift
+            ;;
+        -h|--help)
+            showUsage
+            exit 0
+            ;;
+        -v|--version)
+            showVersion
+            exit 0
+            ;;
+        *)
+            showUsage
+            exit 1
+            ;;
+    esac
+
+    shift
+done
+
+shift
+
+# Evaluate non options
+
+if [ "$1" = "" ]
+then
+    phasesVarName="phases"
+else
+    phasesVarName="$1"
+fi
+
+# Check options
+
+if [ "$globalConfig" = "" ]
+then
+    echo "ERROR: No global config provided!" >&2
+    exit 1
+fi
+
+if [ "$scriptConfig" = "" ]
+then
+    echo "ERROR: No script config provided!" >&2
+    exit 1
+fi
+
+# Load configuration files
+
+source "$globalConfig"
+source "$scriptConfig"
+
+# Execute phases
+
+for phase in ${!phasesVarName}
+do
+    executePhase "$phase"
+done

@@ -1,0 +1,153 @@
+#!/bin/bash -e
+
+# Checks whether a script in a mandatory sequence is selected
+#
+# Parameters:
+# $1 Relative path of the script
+#
+# Environment variables:
+# sequenceStateDir Directory in which the selection information is stored
+#
+# Exit status:
+# 0 if the script was selected, else a non-zero exit status
+
+mandatoryScriptIsSelected()
+{
+    [ ! -f "$sequenceStateDir/$1" ]
+}
+
+# Checks whether a script in an optional sequence is selected
+#
+# Parameters:
+# $1 Relative path of the script
+#
+# Environment variables:
+# sequenceStateDir Directory in which the selection information is stored
+#
+# Exit status:
+# 0 if the script was selected, else a non-zero exit status
+
+optionalScriptIsSelected()
+{
+    [ -f "$sequenceStateDir/$1" ]
+}
+
+# Enables the execution of script in a mandatory sequence
+#
+# Parameters:
+# $1 Relative path of the script
+#
+# Environment variables:
+# sequenceStateDir Directory in which the selection information is stored
+
+selectMandatoryScript()
+{
+    rm -f "$sequenceStateDir/$1"
+    local parentDirectory="$sequenceStateDir/$(dirname "$1")"
+
+    if [ -e "$parentDirectory" ]
+    then
+        rmdir --ignore-fail-on-non-empty -p "$parentDirectory"
+    fi
+}
+
+# Enables the execution of script in an optional sequence
+#
+# Parameters:
+# $1 Relative path of the script
+#
+# Environment variables:
+# sequenceStateDir Directory in which the selection information is stored
+
+selectOptionalScript()
+{
+    local parentDirectory="$sequenceStateDir/$(dirname "$1")"
+    mkdir -p "$parentDirectory"
+    touch "$sequenceStateDir/$script"
+}
+
+# Disables the execution of script in a mandatory sequence
+#
+# Parameters:
+# $1 Relative path of the script
+#
+# Environment variables:
+# sequenceStateDir Directory in which the selection information is stored
+
+unselectMandatoryScript()
+{
+    local parentDirectory="$sequenceStateDir/$(dirname "$1")"
+    mkdir -p "$parentDirectory"
+    touch "$sequenceStateDir/$script"
+}
+
+# Disables the execution of script in an optional sequence
+#
+# Parameters:
+# $1 Relative path of the script
+#
+# Environment variables:
+# sequenceStateDir Directory in which the selection information is stored
+
+unselectOptionalScript()
+{
+    rm -f "$sequenceStateDir/$1"
+    local parentDirectory="$sequenceStateDir/$(dirname "$1")"
+
+    if [ -e "$parentDirectory" ]
+    then
+        rmdir --ignore-fail-on-non-empty -p "$parentDirectory"
+    fi
+}
+
+# Determines the settings for evaluating a sequence.
+#
+# Parameters:
+# $1 Indicates whether a sequence is optional or not ("true" indicates optional, "false" mandatory)
+#
+# Environment variables:
+# sequenceStateDir Directory in which the selection information is stored
+# scriptIsSelected Stores the name of the function that determines whether a script is selected
+# selectScript Name of the function that selects a script in a sequence
+# unselectScript Name of the function that unselects a script in a sequence
+
+determineSequenceSettings()
+{
+    if [ "$1" = "true" ]
+    then
+        sequenceStateDir="$CBT_STATE_DIR/required/$sequenceName"
+        scriptIsSelected="optionalScriptIsSelected"
+        selectScript="selectOptionalScript"
+        unselectScript="unselectOptionalScript"
+    else
+        sequenceStateDir="$CBT_STATE_DIR/completed/$sequenceName"
+        scriptIsSelected="mandatoryScriptIsSelected"
+        selectScript="selectMandatoryScript"
+        unselectScript="unselectMandatoryScript"
+    fi
+}
+
+# Queries all scripts in a group
+#
+# Parameters:
+# $1 A white space separated string of scripts
+# $2 Path to a selected group
+#
+# Environment variables:
+# scriptsInGroup A white space separated string of scripts in the selected group
+
+queryScriptsInGroup()
+{
+    scriptsInGroup=
+
+    local script
+    for script in $1
+    do
+        local groupName="$(dirname "$script")"
+
+        if [ "$groupName" = "$2" ]
+        then
+            scriptsInGroup="$scriptsInGroup $script"
+        fi
+    done
+}

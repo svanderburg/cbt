@@ -1,0 +1,89 @@
+#!/bin/bash -e
+
+# Shows the usage of this command to the user
+
+showUsage()
+{
+    local me="$(basename "$0")"
+
+    cat <<EOF
+Usage: $me SEQUENCE
+
+Queries all source artifacts that all scripts in a given sequence require.
+
+Options:
+      --prefix           Prefix to add in front of the source paths
+  -h, --help             Display help page
+  -v, --version          Display version
+EOF
+}
+
+# Shows the version of this command to the user
+
+showVersion()
+{
+    local me="$(basename "$0")"
+
+    cat <<EOF
+$me (cbt) 0.1
+EOF
+}
+
+# Parse valid argument options
+
+PARAMS=`getopt -n "$0" -o hv -l prefix:,help,version -- "$@"`
+
+if [ $? != 0 ]
+then
+     showUsage
+     exit 1
+fi
+
+eval set -- "$PARAMS"
+
+# Evaluate valid options
+
+while [ "$1" != "--" ]
+do
+    case "$1" in
+        --prefix)
+            prefixArg="--prefix $2"
+            shift
+            ;;
+        -h|--help)
+            showUsage
+            exit 0
+            ;;
+        -v|--version)
+            showVersion
+            exit 0
+            ;;
+        *)
+            showUsage
+            exit 1
+            ;;
+    esac
+
+    shift
+done
+
+shift
+
+# Evaluate non-options
+
+if [ "$1" = "" ]
+then
+    echo "No sequence specified"
+    showUsage
+    exit 1
+fi
+
+# Open sequence definition
+source "$1"
+
+# Show dependencies of each script
+
+for script in $scripts
+do
+    cbt-script-deps $prefixArg "scripts/$script"
+done

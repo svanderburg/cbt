@@ -1,0 +1,7 @@
+#!/bin/bash -e
+
+case "$1" in
+    *.gz|*.Z)
+        gunzip -c "$1"
+        ;;
+esac

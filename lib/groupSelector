@@ -1,0 +1,54 @@
+#!/bin/bash -e
+
+# Generates the menu items for the group selector
+#
+# Parameters:
+# $1 A white space separated string of scripts in a sequence
+#
+# Output:
+# Menu item parameters representing unique groups
+
+generateUniqueGroupMenuItems()
+{
+    local uniqueGroups=$((
+        for script in $1
+        do
+            groupName="$(dirname "$script")"
+
+            echo "$groupName"
+        done
+    ) | sort -u)
+
+    local groupName
+    for groupName in $uniqueGroups
+    do
+        echo -n " $groupName"
+        echo -n " -"
+    done
+}
+
+# Opens a dialog that allows the user to select a unique group from a sequence
+#
+# Parameters:
+# $1 A white space separated string of scripts in a sequence
+#
+# Environment variables:
+# DIALOG The dialog command to use
+# selectedGroup Stores the group that was selected
+
+displayGroupSelector()
+{
+    set +e
+    selectedGroup=$($DIALOG --backtitle "CBT" \
+      --title "Select script group" \
+      --menu "Scripts in a sequence are categorized in groups. Select a group to get an overview of the available scripts belonging to that group" \
+      20 60 11 \
+      $(generateUniqueGroupMenuItems "$1") 2>&1 1>&3)
+    exitStatus=$?
+    set -e
+
+    if [ "$exitStatus" -ne 0 ]
+    then
+        exit
+    fi
+}

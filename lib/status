@@ -1,0 +1,56 @@
+#!/bin/bash -e
+
+# Width of the Screen
+COLUMNS=$(stty size)
+COLUMNS=${COLUMNS##* }
+
+# When using remote connections, such as a serial port, stty size returns 0
+if [ "$COLUMNS" = "0" ]
+then
+    COLUMNS=80
+fi
+
+# Measurements for positioning result messages
+COL=$(($COLUMNS - 10))
+
+# Set Cursor Position Commands, used via echo -e
+SET_COL="\\033[${COL}G"
+CURS_UP="\\033[A"
+
+# Set color commands, used via echo -e
+NORMAL="\\033[0;39m"
+SUCCESS="\\033[1;32m"
+FAILURE="\\033[1;31m"
+
+# Returns a OK status message
+
+echo_ok()
+{
+    echo -e "$CURS_UP$SET_COL"["$SUCCESS""  OK  ""$NORMAL"]
+}
+
+# Returns a failure status message
+
+echo_failure()
+{
+    echo -e "$CURS_UP$SET_COL"["$FAILURE"FAILED"$NORMAL"]
+}
+
+# Evaluates the exit status. Returns OK on success and FAILED on failure.
+#
+# Parameters:
+# $1 The exit status of the last executed command
+#
+# Exit status:
+# The same as the provided input parameter
+
+evaluateExitStatus()
+{
+    if [ $1 = 0 ]
+    then
+        echo_ok
+    else
+        echo_failure
+        exit $1
+    fi
+}

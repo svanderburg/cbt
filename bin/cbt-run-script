@@ -1,0 +1,7 @@
+#!/bin/bash -e
+
+env -i BASH_ENV=/etc/profile HOME="$HOME" TERM="$TERM" TMPDIR="$TMPDIR" \
+  CBT_GLOBAL_CONFIG="$CBT_GLOBAL_CONFIG" \
+  CBT_STATE_DIR="$CBT_STATE_DIR" \
+  CBT_LOG_DIR="$CBT_LOG_DIR" \
+  bash -c "unset BASH_ENV; $CBT_BINDIR/cbt-run-script-impure $@"

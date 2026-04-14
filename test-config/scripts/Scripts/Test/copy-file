@@ -1,0 +1,15 @@
+#!/bin/bash -e
+
+source $cbtBaseDir/settings/testsequence
+
+name=copy-file
+group=Scripts/Test
+description="Copies a file to the temp directory"
+executeFunction=copyFileFunction
+dependencyVariables="files"
+files=("h/hello/hello-2.1.1.tar.gz")
+
+copyFileFunction()
+{
+    cp $sourcesDir/${files[0]} $TMPDIR
+}

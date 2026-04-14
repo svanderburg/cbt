@@ -1,0 +1,5 @@
+#!/bin/bash -e
+
+noCheckInstall=false
+noRemoveBuildDir=false
+buildPhases=""

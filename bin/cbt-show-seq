@@ -1,0 +1,170 @@
+#!/bin/bash -e
+
+# Open functionality modules
+source $CBT_DATADIR/lib/dialog
+source $CBT_DATADIR/lib/checks
+source $CBT_DATADIR/lib/sequence
+source $CBT_DATADIR/lib/script
+source $CBT_DATADIR/lib/groupSelector
+
+# Generates the menu parameters that need to be propagated to the dialog
+# command to show a menu of scripts.
+#
+# Parameters:
+# $1 A white space separated list of scripts in a selected group
+#
+# Environment variables:
+# scriptMenuItems An array of menu items showing scripts that can be selected
+
+generateScriptMenuItems()
+{
+    scriptMenuItems=()
+
+    local sortedSequence="$(echo "$1" | xargs -n1 | sort -n)"
+
+    local script
+    for script in $sortedSequence
+    do
+        local scriptName="$(basename "$script")"
+        loadAndCheckScript "scripts/$script"
+
+        scriptMenuItems=("${scriptMenuItems[@]}" "$scriptName" "$description")
+    done
+}
+
+# Displays a menu dialog allowing a user to select a script in a selected
+# group.
+#
+# Parameters:
+# $1 A white space separated string of scripts
+# $2 Path to a selected group
+#
+# Environment variables:
+# selectedScript The script that was selected by the user
+
+displayScriptInGroupSelector()
+{
+    queryScriptsInGroup "$1" "$2" # scriptsInGroup=
+    generateScriptMenuItems "$scriptsInGroup"
+
+    while true
+    do
+        set +e
+        selectedScript=$($DIALOG --backtitle "CBT" \
+          --title "Select scripts" \
+          --menu "Select the scripts that you want to display information for" \
+          20 65 12 \
+          "${scriptMenuItems[@]}" 2>&1 1>&3)
+        exitStatus=$?
+        set -e
+
+        if [ "$exitStatus" -eq 0 ]
+        then
+            cbt-show-script "scripts/$selectedGroup/$selectedScript"
+        else
+            break
+        fi
+    done
+}
+
+# Shows the usage of this command to the user
+
+showUsage()
+{
+    local me="$(basename "$0")"
+
+    cat <<EOF
+Usage: $me [OPTION] SEQUENCE
+
+Displays the properties of scripts that are executed in a sequence.
+
+Options:
+      --group            Group to select scripts from. If none is specified, a
+                         group selector will be shown
+  -h, --help             Display help page
+EOF
+}
+
+# Shows the version of this command to the user
+
+showVersion()
+{
+    local me="$(basename "$0")"
+
+    cat <<EOF
+$me (cbt) 0.1
+EOF
+}
+
+# Parse valid argument options
+
+PARAMS=`getopt -n "$0" -o hv -l group:,help,version -- "$@"`
+
+if [ $? != 0 ]
+then
+     showUsage
+     exit 1
+fi
+
+eval set -- "$PARAMS"
+
+# Evaluate valid options
+
+while [ "$1" != "--" ]
+do
+    case "$1" in
+        --group)
+            selectedGroup="$2"
+            shift
+            ;;
+        -h|--help)
+            showUsage
+            exit 0
+            ;;
+        -v|--version)
+            showVersion
+            exit 0
+            ;;
+        *)
+            showUsage
+            exit 1
+            ;;
+    esac
+
+    shift
+done
+
+shift
+
+# Evaluate non-options
+
+if [ "$1" = "" ]
+then
+    echo "No sequence file provided!" >&2
+    exit 1
+else
+    sequenceFile="$1"
+fi
+
+# Evaluate environment variables
+
+checkDialog
+
+# Open script configurations
+
+source "$sequenceFile"
+
+# Display dialogs
+
+exec 3>&1
+
+if [ "$selectedGroup" = "" ]
+then
+    while true
+    do
+        displayGroupSelector "$scripts" # selectedGroup=
+        displayScriptInGroupSelector "$scripts" "$selectedGroup"
+    done
+else
+    displayScriptInGroupSelector "$scripts" "$selectedGroup"
+fi

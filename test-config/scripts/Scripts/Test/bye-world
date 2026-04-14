@@ -1,0 +1,13 @@
+#!/bin/bash -e
+
+name=bye-world
+group=Scripts/Test
+description="Small script that echoes bye"
+executeFunction=byeWorldFunction
+
+byeWorldFunction()
+{
+    mkdir -p $TMPDIR/bye-world
+    echo "Bye world!" > $TMPDIR/bye-world/bye-world.txt
+}
+

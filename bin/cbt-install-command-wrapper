@@ -1,0 +1,8 @@
+#!/bin/bash
+
+(
+set -e
+eval "$installCommand"
+)
+exitStatus=$?
+echo "$exitStatus" > $CBT_BUILD_DIR/exitStatus

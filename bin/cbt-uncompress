@@ -1,0 +1,107 @@
+#!/bin/bash -e
+
+# Shows the usage of this command to the user
+
+showUsage()
+{
+    local me="$(basename "$0")"
+
+    cat <<EOF
+Usage: $me ARCHIVE
+
+Automatically uncompresses the provided file to the standard output by
+consulting the unpack plugins in the in the \$cbtUncompressPlugins directory.
+
+If a plugin recognizes the file it uncompressed it and sets the hasUncompressed
+environment variable to 1 causing the process to stop. Otherwise, the remaining
+available pluins are examined. If no plugin has recognized the file, the process
+will simply output the original file.
+
+Options:
+  -h, --help             Display help page
+
+Environment:
+  CBT_UNCOMPRESS_PLUGINS Specify the directory in which uncompress plugins can
+                         be found (defaults to:
+                         /usr/share/cbt/uncompress-plugins)
+EOF
+}
+
+# Shows the version of this command to the user
+
+showVersion()
+{
+    local me="$(basename "$0")"
+
+    cat <<EOF
+$me (cbt) 0.1
+EOF
+}
+
+# Parse valid argument options
+
+PARAMS=`getopt -n "$0" -o hv -l help,version -- "$@"`
+
+if [ $? != 0 ]
+then
+     showUsage
+     exit 1
+fi
+
+eval set -- "$PARAMS"
+
+# Evaluate valid options
+
+while [ "$1" != "--" ]
+do
+    case "$1" in
+        -h|--help)
+            showUsage
+            exit 0
+            ;;
+        -v|--version)
+            showVersion
+            exit 0
+            ;;
+        *)
+            showUsage
+            exit 1
+            ;;
+    esac
+
+    shift
+done
+
+shift
+
+# Evaluate non-options
+
+inputFile="$1"
+
+if [ "$inputFile" = "" ]
+then
+    echo "ERROR: No inputFile specified" >&2
+    showUsage
+    exit 1
+fi
+
+# Evaluate environment variables
+
+CBT_UNCOMPRESS_PLUGINS="${CBT_UNCOMPRESS_PLUGINS:-/usr/local/share/cbt/uncompress-plugins}"
+
+# Execute unpack operation
+
+for uncompressPlugin in $CBT_UNCOMPRESS_PLUGINS/*
+do
+    source $uncompressPlugin
+
+    if [ "$hasUncompressed" = "1" ]
+    then
+        break
+    fi
+done
+
+if [ "$hasUncompressed" != "1" ]
+then
+    cat "$inputFile"
+fi

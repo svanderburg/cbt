@@ -1,0 +1,190 @@
+#!/bin/bash -e
+
+version="${version:-noversion}"
+
+if [ "$arch" = "" ]
+then
+    arch="$(uname -m)"
+fi
+
+release="${release:-1}"
+strip="${strip:-yes}"
+stripSo="${stripSo:-yes}"
+license="${license:-restricted}"
+
+if [ "$UID" = "0" ]
+then
+    pakDir="/var/cache/cbt"
+else
+    pakDir="$HOME/.cbt/cache"
+fi
+
+# Export values
+export preConfigureCommand
+export buildCommand
+export installCommand
+export postConfigureCommand
+
+preConfigurePackage()
+{
+    eval "$preConfigureCommand"
+}
+
+displayBuildError()
+{
+    cat >&2 <<EOF
+Build has failed with exit status: $exitStatus
+You can find the results in this folder: $CBT_BUILD_DIR
+Remove this folder if you want to build again
+EOF
+}
+
+buildPackage()
+{
+    # Create build directory and open it
+    export CBT_BUILD_DIR="$TMPDIR/cbt/$name"
+
+    mkdir -p "$CBT_BUILD_DIR"
+    cd "$CBT_BUILD_DIR"
+
+    # Execute build command
+
+    if [ "$buildAsRoot" != "true" ] && [ "$UID" = "0" ]
+    then
+        chown "$builderUser:$builderGroup" "$CBT_BUILD_DIR"
+        set +e
+        su "$builderUser" -c "env PATH=$PATH $buildCommand"
+        exitStatus=$?
+        set -e
+    else
+        set +e
+        $buildCommand
+        exitStatus=$?
+        set -e
+    fi
+
+    if [ "$exitStatus" != "0" ]
+    then
+        displayBuildError
+        exit "$exitStatus"
+    fi
+}
+
+installPackageWithCheckInstall()
+{
+    # Create package description
+    cat > description-pak <<EOF
+$name, version $version
+$(showLongDescription)
+EOF
+
+    # Create package directory
+    mkdir -p "$pakDir"
+
+    # Perform package creation and installation
+    checkinstall \
+      --type="$packageType" \
+      --default \
+      --pkgname="$name" \
+      --pkgversion="$version" \
+      --arch="$arch" \
+      --pkggroup="$group" \
+      --pkgrelease="$release" \
+      --pkglicense="$license" \
+      --pakdir="$pakDir" \
+      --strip="$strip" \
+      --stripso="$stripSo" \
+      --gzman=no \
+      --backup=no \
+      cbt-install-command-wrapper
+
+    exitStatus="$(cat "$CBT_BUILD_DIR/exitStatus")"
+
+    if [ "$exitStatus" != "0" ]
+    then
+        displayBuildError
+        echo "Please also remove the incomplete package!" >&2
+        exit "$exitStatus"
+    fi
+}
+
+installPackage()
+{
+    if [ "$noCheckInstall" = "true" ]
+    then
+        pushd .
+        eval "$installCommand"
+        popd
+    else
+        installPackageWithCheckInstall
+    fi
+}
+
+postConfigurePackage()
+{
+    eval "$postConfigureCommand"
+}
+
+deployPackage()
+{
+    # Check parameters
+
+    if [ "$packageType" = "" ]
+    then
+        echo "ERROR: Missing property: packageType" >&2
+        exit 1
+    fi
+
+    if [ "$UID" = "0" ]
+    then
+        if [ "$builderUser" = "" ]
+        then
+            echo "ERROR: Missing property: builderUser" >&2
+            exit 1
+        fi
+
+        if [ "$builderGroup" = "" ]
+        then
+            echo "ERROR: Missing property: builderGroup" >&2
+            exit 1
+        fi
+    fi
+
+    if [ "$name" = "" ]
+    then
+        echo "ERROR: Missing property: name" >&2
+        exit 1
+    fi
+
+    if [ "$group" = "" ]
+    then
+        echo "ERROR: Missing property: group" >&2
+        exit 1
+    fi
+
+    if [ "$buildCommand" = "" ]
+    then
+        echo "ERROR: Missing property: buildCommand" >&2
+        exit 1
+    fi
+
+    if [ "$installCommand" = "" ]
+    then
+        echo "ERROR: Missing property: installCommand" >&2
+        exit 1
+    fi
+
+    preConfigurePackage
+    buildPackage
+    installPackage
+    postConfigurePackage
+
+    # Remove build directory
+
+    if [ "$noRemoveBuildDir" != "true" ]
+    then
+        rm -rf "$CBT_BUILD_DIR"
+    fi
+}
+
+executeFunction=deployPackage

@@ -1,0 +1,9 @@
+#!/bin/bash -e
+
+arch="${arch:-noarch}"
+
+source $cbtFunctionsDir/deployPhases
+source $cbtCommonDir/desktopItemFunctions
+
+buildPhases=""
+installPhases="installDesktopItems"

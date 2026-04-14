@@ -1,0 +1,6 @@
+#!/bin/bash -e
+
+source $cbtFunctionsDir/deploySourcePackage
+
+noCheckInstall=true
+noRemoveBuildDir=true

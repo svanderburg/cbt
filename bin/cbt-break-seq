@@ -1,0 +1,128 @@
+#!/bin/bash -e
+
+# Open functionality modules
+source $CBT_DATADIR/lib/dialog
+source $CBT_DATADIR/lib/checks
+source $CBT_DATADIR/lib/break
+
+generateScriptMenuItems()
+{
+    local script
+    for script in $scripts
+    do
+        echo "$script"
+        echo "-"
+    done
+}
+
+# Shows the usage of this command to the user
+
+showUsage()
+{
+    local me="$(basename "$0")"
+
+    cat <<EOF
+Usage: $me SEQUENCE
+
+Puts a breakpoint after a selected script in the given sequence.
+
+Options:
+  -h, --help             Display help page
+  -v, --version          Display version
+
+Environment:
+  TMPDIR                 Directory where temp files should be stored (default:
+                         /tmp)
+EOF
+}
+
+# Shows the version of this command to the user
+
+showVersion()
+{
+    local me="$(basename "$0")"
+
+    cat <<EOF
+$me (cbt) 0.1
+EOF
+}
+
+# Parse valid argument options
+
+PARAMS=`getopt -n "$0" -o hv -l help,version -- "$@"`
+
+if [ $? != 0 ]
+then
+     showUsage
+     exit 1
+fi
+
+eval set -- "$PARAMS"
+
+# Evaluate valid options
+
+while [ "$1" != "--" ]
+do
+    case "$1" in
+        -h|--help)
+            showUsage
+            exit 0
+            ;;
+        -v|--version)
+            showVersion
+            exit 0
+            ;;
+        *)
+            showUsage
+            exit 1
+            ;;
+    esac
+
+    shift
+done
+
+shift
+
+# Evaluate non-options
+
+if [ "$1" = "" ]
+then
+    echo "No sequence specified"
+    showUsage
+    exit 1
+fi
+
+# Evaluate environment variables
+
+checkDialog
+checkTmpDir
+checkCbtStateDir
+
+# Configure settings
+
+currentScriptFile="$TMPDIR/cbt-current-script"
+sequenceName="$(basename "$1")"
+
+# Open sequence
+source "$1"
+
+# Open script selector
+
+exec 3>&1
+
+set +e
+selectedScript=$(dialog --backtitle "CBT" \
+  --menu "Select a script to put a break point after:" \
+  20 60 13 \
+  $(generateScriptMenuItems) 2>&1 1>&3)
+exitStatus=$?
+set -e
+
+if [ "$exitStatus" -ne 0 ]
+then
+    exit $exitStatus
+fi
+
+# Set breakpoint
+
+setBreakPointAfterScript "$sequenceName" "$selectedScript"

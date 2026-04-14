@@ -1,0 +1,109 @@
+#!/bin/bash -e
+
+# Open functionality modules
+source $CBT_DATADIR/lib/checks
+source $CBT_DATADIR/lib/dialog
+source $CBT_DATADIR/lib/script
+
+# Shows the usage of this command to the user
+
+showUsage()
+{
+    local me="$(basename "$0")"
+
+    cat <<EOF
+Usage: $me SCRIPT
+
+Shows the properties of a provided script configuration.
+
+Options:
+  -h, --help             Display help page
+  -v, --version          Display version
+
+Environment:
+  TMPDIR                 Directory where temp files should be stored (default:
+                         /tmp)
+EOF
+}
+
+# Shows the version of this command to the user
+
+showVersion()
+{
+    local me="$(basename "$0")"
+
+    cat <<EOF
+$me (cbt) 0.1
+EOF
+}
+
+# Parse valid argument options
+
+PARAMS=`getopt -n "$0" -o hv -l help,version -- "$@"`
+
+if [ $? != 0 ]
+then
+     showUsage
+     exit 1
+fi
+
+eval set -- "$PARAMS"
+
+# Evaluate valid options
+
+while [ "$1" != "--" ]
+do
+    case "$1" in
+        -h|--help)
+            showUsage
+            exit 0
+            ;;
+        -v|--version)
+            showVersion
+            exit 0
+            ;;
+        *)
+            showUsage
+            exit 1
+            ;;
+    esac
+
+    shift
+done
+
+shift
+
+# Evaluate non-options
+
+if [ "$1" = "" ]
+then
+    echo "ERROR: No script config provided!" >&2
+    exit 1
+else
+    scriptConfig="$1"
+fi
+
+# Evaluate environment variables
+checkDialog
+checkTmpDir
+
+# Load script
+loadAndCheckScript "$scriptConfig"
+
+# Display properties
+
+cat > $TMPDIR/script-properties <<EOF
+name                : $name
+group               : $group
+description         : $description
+executeFunction     : $executeFunction
+dependencyVariables : $dependencyVariables
+
+longDescription
+---------------
+$(showLongDescription)
+EOF
+
+$DIALOG --backtitle "CBT" \
+      --title "Script properties" \
+      --textbox $TMPDIR/script-properties 20 75

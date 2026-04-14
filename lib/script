@@ -1,0 +1,64 @@
+#!/bin/bash -e
+
+# Loads and checks a script.
+#
+# Parameters:
+# $1 Path to the script to load
+#
+# Environment variables:
+# cbtBaseDir Sets the base directory of the scripts
+# executeFunction Name of the function to execute (defaults to: execute)
+# dependencyVariables A whitespace separated list of file dependency variables. (defaults to: files)
+# CBT_GLOBAL_CONFIG Path to the global cbt configuration file
+# CBT_SCRIPT_CONFIG Path to the script to be loaded
+# name Name of the script
+# group Group of the script
+# description Short description of the script's purpose
+#
+# The remainder of the environment variables are taken as they are from the script
+
+loadAndCheckScript()
+{
+    # Default values for any script
+    export cbtBaseDir="$PWD"
+    export cbtBinDir="$CBT_BINDIR"
+    export cbtCommonDir="$CBT_DATADIR/common"
+    export cbtFunctionsDir="$CBT_DATADIR/functions"
+    
+    executeFunction="execute"
+    dependencyVariables="files"
+
+    # Open global configuration
+    export CBT_GLOBAL_CONFIG="${CBT_GLOBAL_CONFIG:-/etc/cbt/cbt}"
+    source "$CBT_GLOBAL_CONFIG"
+
+    # Open script configuration
+    if [ "${1:0:1}" = "/" ]
+    then
+        export CBT_SCRIPT_CONFIG="$1"
+    else
+        export CBT_SCRIPT_CONFIG="$PWD/$1"
+    fi
+
+    source "$CBT_SCRIPT_CONFIG"
+
+    # Check parameters
+
+    if [ "$name" = "" ]
+    then
+        echo "ERROR: Script: $CBT_SCRIPT_CONFIG is missing property: name" >&2
+        exit 1
+    fi
+
+    if [ "$group" = "" ]
+    then
+        echo "ERROR: Script: $CBT_SCRIPT_CONFIG is missing property: group" >&2
+        exit 1
+    fi
+
+    if [ "$description" = "" ]
+    then
+        echo "ERROR: Script: $CBT_SCRIPT_CONFIG is missing property: description" >&2
+        exit 1
+    fi
+}

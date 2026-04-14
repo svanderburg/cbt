@@ -1,0 +1,8 @@
+#!/bin/bash -e
+
+source $cbtFunctionsDir/deployPackage
+
+preConfigureCommand="$cbtBinDir/cbt-run-phases --global-config $CBT_GLOBAL_CONFIG --script $CBT_SCRIPT_CONFIG preConfigurePhases"
+buildCommand="$cbtBinDir/cbt-run-phases --global-config $CBT_GLOBAL_CONFIG --script $CBT_SCRIPT_CONFIG buildPhases"
+installCommand="$cbtBinDir/cbt-run-phases --global-config $CBT_GLOBAL_CONFIG --script $CBT_SCRIPT_CONFIG installPhases"
+postConfigureCommand="$cbtBinDir/cbt-run-phases --global-config $CBT_GLOBAL_CONFIG --script $CBT_SCRIPT_CONFIG postConfigurePhases"

@@ -1,0 +1,190 @@
+#!/bin/bash -e
+
+# Open functionality modules
+source $CBT_DATADIR/lib/checks
+source $CBT_DATADIR/lib/sequence
+source $CBT_DATADIR/lib/break
+source $CBT_DATADIR/lib/status
+
+# Removes all the state associated to a running sequence
+#
+# Environment variables:
+# currentScriptFile File that stores the current script that is in execution
+# lockFile Lock file to prevent multiple sequences to execute concurrently
+
+removeState()
+{
+    rm "$currentScriptFile"
+    rm "$lockFile"
+}
+
+# Shows the usage of this command to the user
+
+showUsage()
+{
+    local me="$(basename "$0")"
+
+    cat <<EOF
+Usage: $me [OPTION] SEQUENCE
+
+Executes all scripts in a sequence that have been marked as enabled.
+
+Options:
+  -o, --output-format    Specifies the way the output is presented. 'terminal'
+                         uses the first terminal (/dev/tty1) for displaying the
+                         steps to be executed and the second terminal
+                         (/dev/tty2) for displaying the build progress. 'text'
+                         redirects all output to the standard output and error.
+                         The default is: terminal, unless the DISPLAY
+                         environment variable is set. Then it will be 'text'
+  -h, --help             Display help page
+  -v, --version          Display version
+EOF
+}
+
+# Shows the version of this command to the user
+
+showVersion()
+{
+    local me="$(basename "$0")"
+
+    cat <<EOF
+$me (cbt) 0.1
+EOF
+}
+
+# Parse valid argument options
+
+PARAMS=`getopt -n "$0" -o o:hv -l output-format:,help,version -- "$@"`
+
+if [ $? != 0 ]
+then
+     showUsage
+     exit 1
+fi
+
+eval set -- "$PARAMS"
+
+# Evaluate valid options
+
+while [ "$1" != "--" ]
+do
+    case "$1" in
+        -o|--output-format)
+            outputFormat="$2"
+            shift
+            ;;
+        -h|--help)
+            showUsage
+            exit 0
+            ;;
+        -v|--version)
+            showVersion
+            exit 0
+            ;;
+        *)
+            showUsage
+            exit 1
+            ;;
+    esac
+
+    shift
+done
+
+shift
+
+# Evaluate non-options
+
+if [ "$1" = "" ]
+then
+    echo "No sequence specified"
+    showUsage
+    exit 1
+fi
+
+# Evaluate environment variables
+checkCbtStateDir
+
+# Check configuration options
+
+checkTmpDir
+sequenceName="$(basename "$1")"
+
+if [ "$outputFormat" = "" ]
+then
+    if [ "$DISPLAY" = "" ]
+    then
+        outputFormat="terminal"
+    else
+        outputFormat="text"
+    fi
+fi
+
+case "$outputFormat" in
+    terminal)
+        sequenceOutputFile="/dev/tty1"
+        scriptOutputFile="/dev/tty2"
+        ;;
+    text)
+        sequenceOutputFile="/dev/stdout"
+        scriptOutputFile="/dev/stdout"
+        ;;
+    *)
+        echo "Unknown output format: $outputFormat" >&2
+        exit 1
+        ;;
+esac
+
+# Open sequence definition
+source "$1"
+
+# Determine configuration properties
+
+determineSequenceSettings "$optional"
+composeBreakPointFilePath "$sequenceName" # breakPointFile=
+
+# Create a lock
+
+lockFile="$TMPDIR/cbt-lock"
+
+if [ -f "$lockFile" ]
+then
+    cat >&2 <<EOF
+Lock file found, refusing to execute.
+The most probable explanation is that there is already a sequence running
+If not, you should remove the lock file: $lockFile and try again
+EOF
+    exit 1
+fi
+
+touch "$lockFile"
+
+currentScriptFile="$TMPDIR/cbt-current-script"
+
+# Configure EXIT handler that removes the lock
+trap removeState EXIT
+
+# Execute the sequence
+
+for script in $scripts
+do
+    echo "$script" > "$currentScriptFile"
+
+    if $scriptIsSelected "$script"
+    then
+        echo "Executing: $script" > $sequenceOutputFile
+
+        set +e
+        cbt-run-script "scripts/$script" > $scriptOutputFile
+        exitStatus=$?
+        evaluateExitStatus "$exitStatus"
+        set -e
+
+        $unselectScript "$script"
+    else
+        echo "Skipping: $script" > $sequenceOutputFile
+        echo_ok
+    fi
+
+    checkForBreakPoint "$breakPointFile" "$script"
+done

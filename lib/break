@@ -1,0 +1,64 @@
+#!/bin/bash -e
+
+# Composes the full path to a breakpoint file of a sequence in execution.
+#
+# Parameters:
+# $1 Name of the sequence
+#
+# Environment variables:
+# CBT_STATE_DIR Path to cbt's state folder
+
+composeBreakPointFilePath()
+{
+    breakPointFile="$CBT_STATE_DIR/break/$1"
+}
+
+# Sets a breakpoint after a provided script in a sequence
+#
+# Parameters:
+# $1 Name of the sequence
+# $2 Relative path to a script from the scripts/ directory
+#
+# Environment variables:
+# CBT_STATE_DIR Path to cbt's state folder
+
+setBreakPointAfterScript()
+{
+    composeBreakPointFilePath "$1"
+    mkdir -p "$CBT_STATE_DIR/break"
+    echo "$2" > "$breakPointFile"
+}
+
+# Clears the breakpoint after a provided script in a sequence
+#
+# Parameters:
+# $1 Name of the sequence
+#
+# Environment variables:
+# CBT_STATE_DIR Path to cbt's state folder
+
+clearBreakPoint()
+{
+    composeBreakPointFilePath "$1"
+    rm -f "$breakPointFile"
+}
+
+# Checks if the breakpoint was reached and terminates the bash script if this is the case.
+#
+# Parameters:
+# $1 Path to the breakpoint file
+# $2 Script that was previously executed
+
+checkForBreakPoint()
+{
+    if [ -f "$1" ]
+    then
+        local breakPointScript="$(cat "$1")"
+
+        if [ "$1" = "$2" ]
+        then
+            echo "Breakpoint was reached!"
+            exit
+        fi
+    fi
+}

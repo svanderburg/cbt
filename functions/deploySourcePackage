@@ -1,0 +1,76 @@
+#!/bin/bash -e
+
+source $cbtFunctionsDir/deployPhases
+defaultPatchLevel=1
+dependencyVariables="$dependencyVariables srcs src patches"
+
+unpackPhase()
+{
+    local srcElement
+    for srcElement in ${srcs[@]} $src
+    do
+        # Relative src paths must be made relative to the sources directory
+        if [ "${srcElement:0:1}" = "/" ]
+        then
+            fullSrc="$srcElement"
+        else
+            fullSrc="$sourcesDir/$srcElement"
+        fi
+
+        export cbtUnpackPluginsDir
+        $cbtBinDir/cbt-unpack "$fullSrc"
+    done
+}
+
+openWorkDirPhase()
+{
+    # Search for a directory if no work directory was specified
+
+    if [ "$workDir" = "" ]
+    then
+        local numOfDirs="$(find . -type d -mindepth 1 -maxdepth 1 | wc -l)"
+
+        if [ "$numOfDirs" -eq 0 ]
+        then
+            echo "No directories were found!" >&2
+        elif [ "$numOfDirs" -eq 1 ]
+        then
+            workDir="$(find . -type d -mindepth 1 -maxdepth 1)"
+        else
+            echo "Multiple directories were found:" >&2
+            find . -type d -mindepth 1 -maxdepth 1 >&2
+            echo "Please specify a workDir" >&2
+            exit 1
+        fi
+    fi
+
+    # Open the base directory
+
+    if [ -d "$workDir" ]
+    then
+        cd "$workDir"
+    fi
+}
+
+patchPhase()
+{
+    local patchElement
+    for patchElement in ${patches[@]}
+    do
+        # Relative patch file paths must be made relative to the sources directory
+        if [ "${patchElement:0:1}" = "/" ]
+        then
+            fullPatch="$patchElement"
+        else
+            fullPatch="$sourcesDir/$patchElement"
+        fi
+
+        export cbtUncompressPluginsDir
+        $cbtBinDir/cbt-uncompress "$fullPatch" | patch -p$defaultPatchLevel
+    done
+}
+
+preConfigurePhases="preConfigure"
+buildPhases="unpack openWorkDir patch build"
+installPhases="openWorkDir install"
+postConfigurePhases="openWorkDir postConfigure"

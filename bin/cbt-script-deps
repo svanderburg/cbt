@@ -1,0 +1,110 @@
+#!/bin/bash -e
+
+source $CBT_DATADIR/lib/script
+
+# Shows the usage of this command to the user
+
+showUsage()
+{
+    local me="$(basename "$0")"
+
+    cat <<EOF
+Usage: $me SCRIPT
+
+Queries all dependency artifacts that the given script requires.
+
+Options:
+      --prefix           Prefix to add in front of the source paths
+  -h, --help             Display help page
+  -v. --version          Display version
+EOF
+}
+
+# Shows the version of this command to the user
+
+showVersion()
+{
+    local me="$(basename "$0")"
+
+    cat <<EOF
+$me (cbt) 0.1
+EOF
+}
+
+isArray()
+{
+    declare -p "$1" 2> /dev/null | grep -q '^declare \-a'
+}
+
+# Parse valid argument options
+
+PARAMS=`getopt -n "$0" -o hv -l prefix:,help,version -- "$@"`
+
+if [ $? != 0 ]
+then
+     showUsage
+     exit 1
+fi
+
+eval set -- "$PARAMS"
+
+# Evaluate valid options
+
+while [ "$1" != "--" ]
+do
+    case "$1" in
+        --prefix)
+            prefix="$2"
+            shift
+            ;;
+        -h|--help)
+            showUsage
+            exit 0
+            ;;
+        -v|--version)
+            showVersion
+            exit 0
+            ;;
+        *)
+            showUsage
+            exit 1
+            ;;
+    esac
+
+    shift
+done
+
+shift
+
+# Evaluate non-options
+
+if [ "$1" = "" ]
+then
+    echo "ERROR: No script config provided!" >&2
+    exit 1
+else
+    scriptConfig="$1"
+fi
+
+# Load script config
+loadAndCheckScript "$scriptConfig"
+
+# Display dependencies
+
+for dependencyVariable in $dependencyVariables
+do
+    if isArray $dependencyVariable
+    then
+        dependencyVariableRef="${dependencyVariable}[@]"
+
+        for element in ${!dependencyVariableRef}
+        do
+            echo "$prefix$element"
+        done
+    else
+        if [ "${!dependencyVariable}" != "" ]
+        then
+            echo "${prefix}${!dependencyVariable}"
+        fi
+    fi
+done

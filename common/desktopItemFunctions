@@ -1,0 +1,57 @@
+#!/bin/bash -e
+
+createDesktopItem()
+{
+    cat <<EOF
+[Desktop Entry]
+Type=Application
+Name=$desktopName
+Exec=$exec
+EOF
+
+    if [ "$comment" != "" ]
+    then
+        echo "Comment=$comment"
+    fi
+
+    if [ "$icon" != "" ]
+    then
+        echo "Icon=$icon"
+    fi
+
+    if [ "$terminal" != "" ]
+    then
+        echo "Terminal=$terminal"
+    fi
+
+    if [ "$terminalOptions" != "" ]
+    then
+        echo "TerminalOptions=$terminalOptions"
+    fi
+
+    if [ "$path" != "" ]
+    then
+        echo "Path=$path"
+    fi
+
+    if [ "$mimeType" != "" ]
+    then
+        echo "MimeType=$mimeType"
+    fi
+
+    if [ "$noDisplay" != "" ]
+    then
+        echo "NoDisplay=$noDisplay"
+    fi
+}
+
+installDesktopItemsPhase()
+{
+    desktopFileName="${desktopFileName:-$name}"
+
+    for dir in $desktopFolders
+    do
+        mkdir -p "$dir/$category"
+        createDesktopItem > "$dir/$category/$desktopFileName.desktop"
+    done
+}

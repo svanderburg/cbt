@@ -1,0 +1,21 @@
+#!/bin/bash -e
+
+# Checks which dialog command is preferred to use. If DIALOG was set then that
+# command is used. If an X session is active and gdialog is present then that
+# command is used. Otherwise, it defaults to: dialog
+#
+# Environment variables:
+# DIALOG Contains the preferred dialog command
+
+checkDialog()
+{
+    if [ "$DIALOG" = "" ]
+    then
+        if [ "$DISPLAY" != "" ] && [ "$(which gdialog)" != "" ]
+        then
+            DIALOG=gdialog
+        else
+            DIALOG=dialog
+        fi
+    fi
+}

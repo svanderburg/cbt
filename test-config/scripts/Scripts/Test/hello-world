@@ -1,0 +1,12 @@
+#!/bin/bash -e
+
+name=hello-world
+group=Scripts/Test
+description="Small script that echoes hello"
+executeFunction=helloWorldFunction
+
+helloWorldFunction()
+{
+    mkdir -p $TMPDIR/hello-world
+    echo "Hello world!" > $TMPDIR/hello-world/hello-world.txt
+}
