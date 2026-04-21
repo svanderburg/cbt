@@ -156,6 +156,13 @@ deployPackage()
         exit 1
     fi
 
+    case "$version" in
+        *-*)
+            echo "ERROR: A '-' character is not allowed in property: version, value: $version" >&2
+            exit 1
+            ;;
+    esac
+
     if [ "$group" = "" ]
     then
         echo "ERROR: Missing property: group" >&2
