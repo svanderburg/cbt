@@ -28,17 +28,17 @@ openWorkDirPhase()
 
     if [ "$workDir" = "" ]
     then
-        local numOfDirs="$(find . -type d -mindepth 1 -maxdepth 1 | wc -l)"
+        local numOfDirs="$(find . -mindepth 1 -maxdepth 1 -type d | wc -l)"
 
         if [ "$numOfDirs" -eq 0 ]
         then
             echo "No directories were found!" >&2
         elif [ "$numOfDirs" -eq 1 ]
         then
-            workDir="$(find . -type d -mindepth 1 -maxdepth 1)"
+            workDir="$(find . -mindepth 1 -maxdepth 1 -type d)"
         else
             echo "Multiple directories were found:" >&2
-            find . -type d -mindepth 1 -maxdepth 1 >&2
+            find . -mindepth 1 -maxdepth 1 -type d >&2
             echo "Please specify a workDir" >&2
             exit 1
         fi
