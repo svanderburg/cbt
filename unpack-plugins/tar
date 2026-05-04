@@ -17,4 +17,8 @@ case "$1" in
         bzip2 -cd "$1" | tar xfv -
         hasUnpacked=1
         ;;
+    *.tar.xz)
+        xz -cd "$1" | tar xfv -
+        hasUnpacked=1
+        ;;
 esac
