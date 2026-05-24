@@ -55,7 +55,7 @@ checkForBreakPoint()
     then
         local breakPointScript="$(cat "$1")"
 
-        if [ "$1" = "$2" ]
+        if [ "$breakPointScript" = "$2" ]
         then
             echo "Breakpoint was reached!"
             exit

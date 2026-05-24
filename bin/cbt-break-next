@@ -2,6 +2,7 @@
 
 # Open functionality modules
 source $CBT_DATADIR/lib/checks
+source $CBT_DATADIR/lib/break
 
 # Shows the usage of this command to the user
 
