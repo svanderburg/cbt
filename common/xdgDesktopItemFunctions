@@ -1,13 +1,18 @@
 #!/bin/bash -e
 
-createDesktopItem()
+createXDGDesktopItem()
 {
     cat <<EOF
 [Desktop Entry]
 Type=Application
 Name=$desktopName
 Exec=$exec
+Categories=$categories
 EOF
+    if [ "$genericName" != "" ]
+    then
+        echo "GenericName=$genericName"
+    fi
 
     if [ "$comment" != "" ]
     then
@@ -45,13 +50,10 @@ EOF
     fi
 }
 
-installDesktopItemsPhase()
+installXDGDesktopItemsPhase()
 {
     local desktopFileName="${desktopFileName:-$name}"
 
-    for dir in $desktopFolders
-    do
-        mkdir -p "$dir/$category"
-        createDesktopItem > "$dir/$category/$desktopFileName.desktop"
-    done
+    mkdir -p "$desktopTargetDir"
+    createXDGDesktopItem > "$desktopTargetDir/$desktopFileName.desktop"
 }

@@ -637,11 +637,11 @@ installPhase()
 
 deployDesktopItem
 -----------------
-`deployDesktopItem`'s purpose is to deploy a freedesktop.org compatible .desktop
-file to make an application visible in the program launcher menus of a variety
-of desktop environments, including KDE and GNOME. This function is typically
-useful to augment existing desktop application packages from the host system
-with menu links if they are absent.
+`deployDesktopItem`'s purpose is to deploy .desktop files to make an application
+visible in the program launcher menus of a variety of classic desktop
+environments, including KDE 2.x and GNOME 1.x. This function is typically useful
+to augment existing desktop application packages from the host system with menu
+links if they are absent.
 
 This function is built on top of the `deployPhases` function.
 
@@ -652,6 +652,7 @@ parameters:
   files are supposed to be stored
 * `desktopFileName` specifies the name of the .desktop file. If it is left
   unspecified, it takes the value from the `name` variable
+* `category` specifies to which category the application belongs.
 * `desktopName` is the name of the application in the menu
 * `exec` refers to the executable that needs to be launched
 * `comment` provides a more detailed description of the menu item
@@ -671,6 +672,38 @@ desktop application packages from source code that do not include any desktop
 links.
 
 It accepts the combination of the parameters of both functions.
+
+deployXDGDesktopItem
+--------------------
+This function's purpose is similar to `deployDesktopItem` but it generates
+`.desktop` files in the format that is standardized by the
+[Desktop Entry specification](https://specifications.freedesktop.org/desktop-entry/latest)
+maintained by the Freedesktop initiative. These desktop files are supported by
+several desktops including KDE 3.x and GNOME 2.x and newer.
+
+This function takes almost the same parameters as `deployDesktopItem`:
+
+* `desktopTargetDir` specifies the directory in which the .desktop file should
+  be stored.
+* `desktopFileName` specifies the name of the .desktop file. If it is left
+  unspecified, it takes the value from the `name` variable
+* `desktopName` is the name of the application in the menu
+* `genericName` specifies a generic name for the application
+* `exec` refers to the executable that needs to be launched
+* `comment` provides a more detailed description of the menu item
+* `categories` specifies the categories in which the application belongs
+* `icon` provides the path to an icon to be displayed. This field is optional.
+* `terminal` is it set to 1, a terminal window is opened. By default it is `0`
+* `terminalOptions` provides the terminal window parameters
+* `path` provides the current working directory that needs to be opened before
+  running the executable. This field is optional.
+* `mimeType` refers to a semi-colon seperated set of MIME types that the
+  application accepts. This field is optional
+
+deployXDGDesktopSourcePackage
+--------------------------
+Similar to `deployDesktopSourcePackage`, this function combines the
+functionality of the `deploySourcePackage` and `deployXDGDesktopItem` functions.
 
 Unpack plugins
 ==============

@@ -12,6 +12,8 @@ SCRIPTS=deployDesktopItem \
 	deployStage1SourcePackage \
 	deployStage2SourcePackage \
 	deployStage3SourcePackage \
+	deployXDGDesktopItem \
+	deployXDGDesktopSourcePackage \
 	deployTrivialPackage
 
 install:
