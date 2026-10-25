@@ -6,6 +6,8 @@ PREFIX = /usr/local
 
 SCRIPTS=deployDesktopItem \
 	deployDesktopSourcePackage \
+	deployLegacyDesktopItem \
+	deployLegacyDesktopSourcePackage \
 	deployPackage \
 	deployPhases \
 	deploySourcePackage \

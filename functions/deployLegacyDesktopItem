@@ -1,0 +1,10 @@
+#!/bin/bash -e
+
+arch="${arch:-noarch}"
+
+source $cbtFunctionsDir/deployPhases
+source $cbtCommonDir/kdeDesktopItemFunctions
+source $cbtCommonDir/desktopItemFunctions
+
+buildPhases=""
+installPhases="installKDEDesktopItems installDesktopItems"

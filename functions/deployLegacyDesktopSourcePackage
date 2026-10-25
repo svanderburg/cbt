@@ -1,0 +1,9 @@
+#!/bin/bash -e
+
+desktopName="${desktopName:-$name}"
+
+source $cbtCommonDir/desktopItemFunctions
+source $cbtCommonDir/kdeDesktopItemFunctions
+source $cbtFunctionsDir/deploySourcePackage
+
+installPhases="$installPhases installKDEDesktopItems installDesktopItems"

@@ -705,6 +705,13 @@ deployXDGDesktopSourcePackage
 Similar to `deployDesktopSourcePackage`, this function combines the
 functionality of the `deploySourcePackage` and `deployXDGDesktopItem` functions.
 
+deployLegacyDesktopSourcePackage
+--------------------------------
+CBT also supports a combination of the legacy KDE 1.x and GNOME 1.x desktops.
+We can deploy desktop items for this combination with the
+`deployLegacyDesktopItem` function. The `deployLegacyDesktopSourcePackage`
+function combines the former function with the `deploySourcePackage` function.
+
 Unpack plugins
 ==============
 As mentioned in the previous section, the `deploySourcePackage` function

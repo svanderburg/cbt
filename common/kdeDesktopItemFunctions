@@ -1,0 +1,55 @@
+#!/bin/bash -e
+
+createKDEDesktopItem()
+{
+    cat <<EOF
+# KDE Config File
+[KDE Desktop Entry]
+Type=Application
+Name=$desktopName
+Exec=$exec
+EOF
+
+    if [ "$comment" != "" ]
+    then
+        echo "Comment=$comment"
+    fi
+
+    if [ "$icon" != "" ]
+    then
+        echo "Icon=$icon"
+    fi
+
+    if [ "$terminal" != "" ]
+    then
+        echo "Terminal=$terminal"
+    fi
+
+    if [ "$terminalOptions" != "" ]
+    then
+        echo "TerminalOptions=$terminalOptions"
+    fi
+
+    if [ "$path" != "" ]
+    then
+        echo "Path=$path"
+    fi
+
+    if [ "$mimeType" != "" ]
+    then
+        echo "MimeType=$mimeType"
+    fi
+
+    if [ "$noDisplay" != "" ]
+    then
+        echo "NoDisplay=$noDisplay"
+    fi
+}
+
+installKDEDesktopItemsPhase()
+{
+    local desktopFileName="${desktopFileName:-$name}"
+
+    mkdir -p "$kdeDesktopFolder/$category"
+    createKDEDesktopItem > "$kdeDesktopFolder/$category/$desktopFileName.kdelnk"
+}

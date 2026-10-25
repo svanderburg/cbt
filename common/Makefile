@@ -4,12 +4,18 @@ RMDIR = rmdir
 
 PREFIX = /usr/local
 
+SCRIPTS=desktopItemFunctions \
+	kdeDesktopItemFunctions \
+	xdgDesktopItemFunctions
+
 install:
 	$(INSTALL) -d -m755 $(PREFIX)/share/cbt/common
-	$(INSTALL) -m644 desktopItemFunctions $(PREFIX)/share/cbt/common
-	$(INSTALL) -m644 xdgDesktopItemFunctions $(PREFIX)/share/cbt/common
+	for script in $(SCRIPTS); do \
+	    $(INSTALL) -m644 $$script $(PREFIX)/share/cbt/common; \
+	done
 
 uninstall:
-	$(RM) -f $(PREFIX)/share/cbt/common/xdgDesktopItemFunctions
-	$(RM) -f $(PREFIX)/share/cbt/common/desktopItemFunctions
+	for script in $(SCRIPTS); do \
+	    $(RM) -f $(PREFIX)/share/cbt/common/$$script; \
+	done
 	$(RMDIR) $(PREFIX)/share/cbt/common
