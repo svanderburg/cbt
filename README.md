@@ -701,9 +701,19 @@ This function takes almost the same parameters as `deployDesktopItem`:
   application accepts. This field is optional
 
 deployXDGDesktopSourcePackage
---------------------------
+-----------------------------
 Similar to `deployDesktopSourcePackage`, this function combines the
 functionality of the `deploySourcePackage` and `deployXDGDesktopItem` functions.
+
+deployKDE1DesktopSourcePackage
+------------------------------
+CBT can also deploy desktop items for KDE 1.x, using the kdelnk file format,
+which is quite similar to GNOME's 1.x desktop file format (that eventually got
+standardized by the Freedesktop.org group).
+
+The `deployKDE1DesktopItem` function can be used to deploy a desktop file for
+KDE 1.x. We can also combine the source package build procedure with the
+creation of a KDE 1.x desktop link with the `deployKDE1SourcePackage` function.
 
 deployLegacyDesktopSourcePackage
 --------------------------------

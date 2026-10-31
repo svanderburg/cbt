@@ -1,6 +1,6 @@
 #!/bin/bash -e
 
-createKDEDesktopItem()
+createKDE1DesktopItem()
 {
     cat <<EOF
 # KDE Config File
@@ -46,10 +46,10 @@ EOF
     fi
 }
 
-installKDEDesktopItemsPhase()
+installKDE1DesktopItemsPhase()
 {
     local desktopFileName="${desktopFileName:-$name}"
 
     mkdir -p "$kdeDesktopFolder/$category"
-    createKDEDesktopItem > "$kdeDesktopFolder/$category/$desktopFileName.kdelnk"
+    createKDE1DesktopItem > "$kdeDesktopFolder/$category/$desktopFileName.kdelnk"
 }
