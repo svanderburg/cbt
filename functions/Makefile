@@ -6,6 +6,8 @@ PREFIX = /usr/local
 
 SCRIPTS=deployDesktopItem \
 	deployDesktopSourcePackage \
+	deployKDE1DesktopItem \
+	deployKDE1SourcePackage \
 	deployLegacyDesktopItem \
 	deployLegacyDesktopSourcePackage \
 	deployPackage \

@@ -5,7 +5,7 @@ RMDIR = rmdir
 PREFIX = /usr/local
 
 SCRIPTS=desktopItemFunctions \
-	kdeDesktopItemFunctions \
+	kde1DesktopItemFunctions \
 	xdgDesktopItemFunctions
 
 install:

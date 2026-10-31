@@ -3,7 +3,7 @@
 desktopName="${desktopName:-$name}"
 
 source $cbtCommonDir/desktopItemFunctions
-source $cbtCommonDir/kdeDesktopItemFunctions
+source $cbtCommonDir/kde1DesktopItemFunctions
 source $cbtFunctionsDir/deploySourcePackage
 
-installPhases="$installPhases installKDEDesktopItems installDesktopItems"
+installPhases="$installPhases installKDE1DesktopItems installDesktopItems"

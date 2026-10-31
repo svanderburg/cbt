@@ -3,8 +3,8 @@
 arch="${arch:-noarch}"
 
 source $cbtFunctionsDir/deployPhases
-source $cbtCommonDir/kdeDesktopItemFunctions
+source $cbtCommonDir/kde1DesktopItemFunctions
 source $cbtCommonDir/desktopItemFunctions
 
 buildPhases=""
-installPhases="installKDEDesktopItems installDesktopItems"
+installPhases="installKDE1DesktopItems installDesktopItems"
